@@ -7,15 +7,15 @@ const RecipesService = require('./recipes-service')
 const recipesRouter = express.Router()
 const jsonParser = express.json()
 
-// const serializeRecipe = recipe => ({
-//     id: recipe.id,
-//     name: xss(recipe.name),
-//     folderid: recipe.folderid,
-//     timetomake: recipe.timetomake,
-//     description: recipe.description,
-//     ingredients: recipe.ingredients,
-//     steps: recipe.steps,
-// })
+const serializeRecipe = recipe => ({
+    id: recipe.id,
+    name: xss(recipe.name),
+    folderid: recipe.folderid,
+    timetomake: recipe.timetomake,
+    description: xss(recipe.description),
+    ingredients: recipe.ingredients,
+    steps: recipe.steps,
+})
 
 recipesRouter
     .route('/')
@@ -27,4 +27,25 @@ recipesRouter
             .catch(next)
     })
 
+recipesRouter
+    .route('/:recipe_id')
+    .all((req, res, next) => {
+        RecipesService.getById(
+            req.app.get('db'),
+            req.params.recipe_id
+        )
+            .then(recipe => {
+                if (!recipe) {
+                    return res.status(400).json({
+                        error: { message: `Recipe doesn't exist` }
+                    })
+                }
+                res.recipe = recipe
+                next()
+            })
+            .catch(next)
+    })
+    .get((req, res, next) => {
+        res.json(serializeRecipe(res.recipe))
+    })
 module.exports = recipesRouter
