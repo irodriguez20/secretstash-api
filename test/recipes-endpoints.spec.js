@@ -134,4 +134,67 @@ describe(`Recipes Endpoints`, function () {
             })
         })
     })
+
+    describe(`POST /api/recipes`, () => {
+        const testFolders = makeFoldersArray();
+
+        beforeEach("insert folders and recipes", () => {
+            return db
+                .into("folders")
+                .insert(testFolders)
+        });
+
+        it(`creates a recipe, responding with 201 and the new recipe`, function () {
+            const newRecipe = {
+                name: "Test new recipe",
+                folderid: 1,
+                timetomake: "test new time",
+                description: "test new description",
+                ingredients: "test new ingredients",
+                steps: "test new steps"
+            };
+            return supertest(app)
+                .post('/api/recipes')
+                .send(newRecipe)
+                .expect(res => {
+                    expect(res.body.name).to.eql(newRecipe.name);
+                    expect(res.body.folderid).to.eql(newRecipe.folderid);
+                    expect(res.body.timetomake).to.eql(newRecipe.timetomake);
+                    expect(res.body.description).to.eql(newRecipe.description);
+                    expect(res.body.ingredients).to.eql(newRecipe.ingredients);
+                    expect(res.body.steps).to.eql(newRecipe.steps);
+                    expect(res.body).to.have.property("id");
+                    expect(res.headers.location).to.eql(`/api/recipes/${res.body.id}`);
+                })
+                .then(res =>
+                    supertest(app)
+                        .get(`/api/recipes/${res.body.id}`)
+                        .expect(res.body)
+                );
+        });
+
+        const requiredFields = ['name', 'folderid', 'timetomake', 'description', 'ingredients', 'steps']
+
+        requiredFields.forEach(field => {
+            const newRecipe = {
+                name: 'test new recipe',
+                folderid: 1,
+                timetomake: 'test new time',
+                description: 'test new description',
+                ingredients: 'test new ingredients',
+                steps: 'test new steps',
+            }
+
+            it(`responds with 400 and error message when the '${field}' is missing`, () => {
+                delete newRecipe[field]
+
+                return supertest(app)
+                    .post('/api/recipes')
+                    .send(newRecipe)
+                    .expect(400, {
+                        error: { message: `Missing '${field}' in request body` }
+                    })
+            })
+        })
+    })
 });
