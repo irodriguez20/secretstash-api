@@ -197,4 +197,51 @@ describe(`Recipes Endpoints`, function () {
             })
         })
     })
+
+    describe(`DELETE /api/recipes/:recipe_id`, () => {
+        context(`Given no recipes`, () => {
+            const testFolders = makeFoldersArray()
+
+            beforeEach('insert folders', () => {
+                return db
+                    .into('folders')
+                    .insert(testFolders)
+            })
+
+            it(`responds with 400`, () => {
+                const recipeId = 123456
+                return supertest(app)
+                    .delete(`/api/recipes/${recipeId}`)
+                    .expect(400, { error: { message: `Recipe doesn't exist` } })
+            })
+        })
+        context('Given there are recipes in the database', () => {
+            const testFolders = makeFoldersArray()
+            const testRecipes = makeRecipesArray()
+
+            beforeEach('insert recipes', () => {
+                return db
+                    .into('folders')
+                    .insert(testFolders)
+                    .then(() => {
+                        return db
+                            .into('recipes')
+                            .insert(testRecipes)
+                    })
+            })
+
+            it('responds with 204 and removes the recipe', () => {
+                const idToRemove = 2
+                const expectedRecipes = testRecipes.filter(recipe => recipe.id !== idToRemove)
+                return supertest(app)
+                    .delete(`/api/recipes/${idToRemove}`)
+                    .expect(204)
+                    .then(res =>
+                        supertest(app)
+                            .get(`/api/recipes`)
+                            .expect(expectedRecipes)
+                    )
+            })
+        })
+    })
 });

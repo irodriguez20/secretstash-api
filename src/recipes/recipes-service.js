@@ -14,6 +14,11 @@ const RecipesService = {
                 return rows[0]
             })
     },
+    deleteRecipe(knex, id) {
+        return knex('recipes')
+            .where({ id })
+            .delete()
+    },
 }
 
 module.exports = RecipesService

@@ -69,4 +69,14 @@ recipesRouter
     .get((req, res, next) => {
         res.json(serializeRecipe(res.recipe))
     })
+    .delete((req, res, next) => {
+        RecipesService.deleteRecipe(
+            req.app.get('db'),
+            req.params.recipe_id
+        )
+            .then(() => {
+                res.status(204).end()
+            })
+            .catch(next)
+    })
 module.exports = recipesRouter
