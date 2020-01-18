@@ -71,11 +71,11 @@ describe(`Recipes Endpoints`, function () {
 
     describe(`GET /api/recipes/:recipe_id`, () => {
         context(`Given no recipes`, () => {
-            it(`responds 400 no recipes`, () => {
+            it(`responds with 404`, () => {
                 const recipeId = 123456;
                 return supertest(app)
                     .get(`/api/recipes/${recipeId}`)
-                    .expect(400, { error: { message: `Recipe doesn't exist` } });
+                    .expect(404, { error: { message: `Recipe doesn't exist` } });
             });
         });
 
@@ -200,19 +200,11 @@ describe(`Recipes Endpoints`, function () {
 
     describe(`DELETE /api/recipes/:recipe_id`, () => {
         context(`Given no recipes`, () => {
-            const testFolders = makeFoldersArray()
-
-            beforeEach('insert folders', () => {
-                return db
-                    .into('folders')
-                    .insert(testFolders)
-            })
-
-            it(`responds with 400`, () => {
+            it(`responds with 404`, () => {
                 const recipeId = 123456
                 return supertest(app)
                     .delete(`/api/recipes/${recipeId}`)
-                    .expect(400, { error: { message: `Recipe doesn't exist` } })
+                    .expect(404, { error: { message: `Recipe doesn't exist` } })
             })
         })
         context('Given there are recipes in the database', () => {
@@ -243,5 +235,96 @@ describe(`Recipes Endpoints`, function () {
                     )
             })
         })
+    })
+
+    describe(`PATCH /api/recipes/:recipe_id`, () => {
+        context(`Given no recipes`, () => {
+            it(`responds with 404`, () => {
+                const recipeId = 123456
+                return supertest(app)
+                    .patch(`/api/recipes/${recipeId}`)
+                    .expect(404, { error: { message: `Recipe doesn't exist` } })
+            })
+        })
+
+        context(`Given there are recipes in the database`, () => {
+            const testFolders = makeFoldersArray()
+            const testRecipes = makeRecipesArray()
+
+            beforeEach('insert recipes', () => {
+                return db
+                    .into('folders')
+                    .insert(testFolders)
+                    .then(() => {
+                        return db
+                            .into('recipes')
+                            .insert(testRecipes)
+                    })
+            })
+
+            it(`responds with 204 and updates the recipe`, () => {
+                const idToUpdate = 2
+                const updatedRecipe = {
+                    name: 'updated recipe name',
+                    folderid: 1,
+                    timetomake: 'updated time to make',
+                    description: 'updated description',
+                    ingredients: 'updated ingredients',
+                    steps: 'updated steps'
+                }
+                const expectedRecipe = {
+                    ...testRecipes[idToUpdate - 1],
+                    ...updatedRecipe
+                }
+
+                return supertest(app)
+                    .patch(`/api/recipes/${idToUpdate}`)
+                    .send(updatedRecipe)
+                    .expect(204)
+                    .then(res =>
+                        supertest(app)
+                            .get(`/api/recipes/${idToUpdate}`)
+                            .expect(expectedRecipe)
+                    )
+            })
+
+            it(`responds with 400 when no required fields supplied`, () => {
+                const idToUpdate = 2
+                return supertest(app)
+                    .patch(`/api/recipes/${idToUpdate}`)
+                    .send({ irrelevantField: 'foo' })
+                    .expect(400, {
+                        error: {
+                            message: `Request body must contain either 'name', 'timetomake', 'folderid', 'description', 'ingredients', 'steps'`
+                        }
+                    })
+            })
+
+            it(`responds with 204 when updating only a subset of fields`, () => {
+                const idToUpdate = 2
+                const updatedRecipe = {
+                    name: 'updated recipe name'
+                }
+                const expectedRecipe = {
+                    ...testRecipes[idToUpdate - 1],
+                    ...updatedRecipe
+                }
+
+                return supertest(app)
+                    .patch(`/api/recipes/${idToUpdate}`)
+                    .send({
+                        ...updatedRecipe,
+                        fieldToIgnore: 'should not be in GET response'
+                    })
+                    .expect(204)
+                    .then(res =>
+                        supertest(app)
+                            .get(`/api/recipes/${idToUpdate}`)
+                            .expect(expectedRecipe)
+                    )
+            })
+
+        })
+
     })
 });

@@ -19,6 +19,11 @@ const RecipesService = {
             .where({ id })
             .delete()
     },
+    updateRecipe(knex, id, newRecipeFields) {
+        return knex('recipes')
+            .where({ id })
+            .update(newRecipeFields)
+    },
 }
 
 module.exports = RecipesService

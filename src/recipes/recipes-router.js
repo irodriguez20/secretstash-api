@@ -57,7 +57,7 @@ recipesRouter
         )
             .then(recipe => {
                 if (!recipe) {
-                    return res.status(400).json({
+                    return res.status(404).json({
                         error: { message: `Recipe doesn't exist` }
                     })
                 }
@@ -75,6 +75,29 @@ recipesRouter
             req.params.recipe_id
         )
             .then(() => {
+                res.status(204).end()
+            })
+            .catch(next)
+    })
+    .patch(jsonParser, (req, res, next) => {
+        const { name, folderid, timetomake, description, ingredients, steps } = req.body
+        const recipeToUpdate = { name, folderid, timetomake, description, ingredients, steps }
+
+        const numberOfValues = Object.values(recipeToUpdate).filter(Boolean).length
+        if (numberOfValues === 0) {
+            return res.status(400).json({
+                error: {
+                    message: `Request body must contain either 'name', 'timetomake', 'folderid', 'description', 'ingredients', 'steps'`
+                }
+            })
+        }
+
+        RecipesService.updateRecipe(
+            req.app.get('db'),
+            req.params.recipe_id,
+            recipeToUpdate
+        )
+            .then(numRowsAffected => {
                 res.status(204).end()
             })
             .catch(next)
