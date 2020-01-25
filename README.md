@@ -11,4 +11,5 @@
 > 1. GET, POST https://aqueous-tor-18320.herokuapp.com/api/recipes
 > 2. GET, DELETE, PATCH https://aqueous-tor-18320.herokuapp.com/api/recipes/:id
 > 3. GET, POST https://aqueous-tor-18320.herokuapp.com/api/folders
->    [View API in action](https://secretstash-app.now.sh/home "Link to Secret Stash app homescreen")
+>
+> [View API in action](https://secretstash-app.now.sh/home "Link to Secret Stash app homescreen")
